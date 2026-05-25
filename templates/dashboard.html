@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — The Name Villa{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+<h2 class="app-section-title"><i class="bi bi-speedometer2"></i> Dashboard</h2>
+    <span class="text-muted">Welcome, {{ current_user.username }}!</span>
+</div>
+
+<!-- Summary Cards Row -->
+<div class="row g-4 mb-4">
+
+    <!-- Total Tenants -->
+    <div class="col-md-4 col-sm-6">
+        <div class="card text-white bg-primary shadow">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title">Total Tenants</h6>
+                    <h2 class="mb-0">{{ total_tenants }}</h2>
+                </div>
+                <i class="bi bi-people-fill fs-1 opacity-50"></i>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('tenants') }}" class="text-white text-decoration-none">
+                    View all tenants <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Occupied Rooms -->
+    <div class="col-md-4 col-sm-6">
+        <div class="card text-white bg-success shadow">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title">Occupied Rooms</h6>
+                    <h2 class="mb-0">{{ occupied_rooms }}</h2>
+                </div>
+                <i class="bi bi-door-closed-fill fs-1 opacity-50"></i>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('rooms') }}" class="text-white text-decoration-none">
+                    View rooms <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vacant Rooms -->
+    <div class="col-md-4 col-sm-6">
+        <div class="card text-white bg-secondary shadow">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title">Vacant Rooms</h6>
+                    <h2 class="mb-0">{{ vacant_rooms }}</h2>
+                </div>
+                <i class="bi bi-door-open-fill fs-1 opacity-50"></i>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('rooms') }}" class="text-white text-decoration-none">
+                    View rooms <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expiring Soon -->
+    <div class="col-md-6 col-sm-6">
+        <div class="card text-white bg-warning shadow">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title">Expiring Soon</h6>
+                    <h2 class="mb-0">{{ expiring_soon }}</h2>
+                </div>
+                <i class="bi bi-clock-warning fs-1 opacity-50"></i>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('expired') }}" class="text-white text-decoration-none">
+                    View details <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expired -->
+    <div class="col-md-6 col-sm-6">
+        <div class="card text-white bg-danger shadow">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title">Expired Rent</h6>
+                    <h2 class="mb-0">{{ expired }}</h2>
+                </div>
+                <i class="bi bi-exclamation-triangle-fill fs-1 opacity-50"></i>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('expired') }}" class="text-white text-decoration-none">
+                    View details <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Quick Actions -->
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0"><i class="bi bi-lightning"></i> Quick Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3 col-sm-6">
+                <a href="{{ url_for('add_tenant') }}"
+                   class="btn btn-primary w-100 py-3">
+                    <i class="bi bi-person-plus fs-4 d-block mb-1"></i>
+                    Add New Tenant
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <a href="{{ url_for('tenants') }}"
+                   class="btn btn-success w-100 py-3">
+                    <i class="bi bi-people fs-4 d-block mb-1"></i>
+                    View Tenants
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <a href="{{ url_for('rooms') }}"
+                   class="btn btn-secondary w-100 py-3">
+                    <i class="bi bi-door-open fs-4 d-block mb-1"></i>
+                    View Rooms
+                </a>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <a href="{{ url_for('payments') }}"
+                   class="btn btn-info w-100 py-3">
+                    <i class="bi bi-cash-stack fs-4 d-block mb-1"></i>
+                    View Payments
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

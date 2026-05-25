@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+Add Payment — The Name Villa
+{% block page_title %}Record Payment{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1 class="page-header-title">
+        <i class="bi bi-cash-stack"></i> Record Rent Payment
+    </h1>
+    <a href="{{ url_for('tenants') }}" class="btn-secondary-tnh">
+        <i class="bi bi-arrow-left"></i> Back to Tenants
+    </a>
+</div>
+
+<div class="row g-4 justify-content-center">
+    <div class="col-lg-6">
+
+        <!-- Tenant Info Banner -->
+        <div class="tnh-card mb-4">
+            <div class="tnh-card-body"
+                 style="display:flex;align-items:center;gap:16px;padding:18px 22px;">
+                <div style="width:50px;height:50px;background:var(--accent);
+                            border-radius:50%;display:flex;align-items:center;
+                            justify-content:center;color:white;font-weight:800;
+                            font-size:1.2rem;flex-shrink:0;">
+                    {{ tenant.full_name[0]|upper }}
+                </div>
+                <div>
+                    <div style="font-weight:800;font-size:1rem;">
+                        {{ tenant.full_name }}
+                    </div>
+                    <div style="color:var(--text-muted);font-size:0.82rem;">
+                        <i class="bi bi-house"></i> {{ tenant.room.room_name }}
+                        &nbsp;·&nbsp;
+                        <i class="bi bi-phone"></i> {{ tenant.phone }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Form -->
+        <div class="tnh-card">
+            <div class="tnh-card-header">
+                <h6 class="tnh-card-title">
+                    <i class="bi bi-receipt" style="color:var(--success);"></i>
+                    Payment Details
+                </h6>
+            </div>
+            <div class="tnh-card-body">
+
+                <div class="tnh-alert tnh-alert-info" style="margin-bottom:24px;">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <div>
+                        Rent expiry will be <strong>automatically set</strong>
+                        to exactly 1 year from the payment date.
+                    </div>
+                </div>
+
+                <form method="POST"
+                      action="{{ url_for('add_payment', tenant_id=tenant.id) }}">
+
+                    <div class="form-group">
+                        <label class="form-label-tnh">
+                            Amount Paid (GHS)
+                            <span style="color:var(--danger);">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            class="form-control-tnh"
+                            name="amount"
+                            placeholder="e.g. 1200.00"
+                            min="0"
+                            step="0.01"
+                            required
+                            style="font-size:1.1rem;padding:12px 14px;"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label-tnh">
+                            Payment Date
+                            <span style="color:var(--danger);">*</span>
+                        </label>
+                        <input
+                            type="date"
+                            class="form-control-tnh"
+                            name="payment_date"
+                            required
+                            style="font-size:1rem;padding:12px 14px;"
+                        >
+                        <div style="font-size:0.78rem;color:var(--text-muted);
+                                    margin-top:6px;">
+                            <i class="bi bi-calendar-check"></i>
+                            Expiry date will be set to 1 year from this date
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label-tnh">Notes (optional)</label>
+                        <textarea
+                            class="form-control-tnh"
+                            name="notes"
+                            rows="2"
+                            placeholder="e.g. Paid via mobile money"
+                            style="resize:none;"
+                        ></textarea>
+                    </div>
+
+                    <hr style="border-color:var(--border-color);margin:20px 0;">
+
+                    <div style="display:flex;gap:12px;">
+                        <button type="submit" class="btn-success-tnh"
+                                style="padding:12px 28px;font-size:0.95rem;flex:1;
+                                       justify-content:center;">
+                            <i class="bi bi-save"></i> Save Payment
+                        </button>
+                        <a href="{{ url_for('tenants') }}"
+                           class="btn-secondary-tnh"
+                           style="padding:12px 20px;">
+                            Cancel
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Previous Payments -->
+    <div class="col-lg-4">
+        <div class="tnh-card">
+            <div class="tnh-card-header">
+                <h6 class="tnh-card-title">
+                    <i class="bi bi-clock-history"
+                       style="color:var(--accent);"></i>
+                    Payment History
+                </h6>
+            </div>
+            {% if tenant.payments %}
+            <div style="overflow-y:auto;max-height:400px;">
+                {% for payment in tenant.payments|reverse %}
+                <div style="padding:12px 18px;
+                            border-bottom:1px solid var(--border-color);">
+                    <div style="display:flex;justify-content:space-between;
+                                align-items:center;margin-bottom:4px;">
+                        <span style="font-weight:700;font-size:0.875rem;">
+                            GHS {{ "%.2f"|format(payment.amount) }}
+                        </span>
+                        {% if payment.status == 'ACTIVE' %}
+                            <span class="status-badge status-active"
+                                  style="font-size:0.68rem;">✅ Active</span>
+                        {% elif payment.status == 'EXPIRING SOON' %}
+                            <span class="status-badge status-expiring"
+                                  style="font-size:0.68rem;">⚠️ Expiring</span>
+                        {% else %}
+                            <span class="status-badge status-expired"
+                                  style="font-size:0.68rem;">❌ Expired</span>
+                        {% endif %}
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);">
+                        Paid: {{ payment.payment_date.strftime('%d %b %Y') }}
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);">
+                        Expires: {{ payment.expiry_date.strftime('%d %b %Y') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding:30px 20px;">
+                <i class="bi bi-receipt" style="font-size:2rem;"></i>
+                <p style="font-size:0.82rem;">No previous payments</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

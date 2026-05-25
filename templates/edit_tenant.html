@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+Edit Tenant — The Name Villa
+{% block page_title %}Edit Tenant{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1 class="page-header-title">
+        <i class="bi bi-pencil-square"></i> Edit Tenant
+    </h1>
+    <a href="{{ url_for('tenants') }}" class="btn-secondary-tnh">
+        <i class="bi bi-arrow-left"></i> Back to Tenants
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form method="POST"
+              action="{{ url_for('edit_tenant', tenant_id=tenant.id) }}">
+
+            <!-- Personal Information -->
+            <div class="tnh-card mb-4">
+                <div class="tnh-card-header">
+                    <h6 class="tnh-card-title">
+                        <i class="bi bi-person-fill"
+                           style="color:var(--accent);"></i>
+                        Personal Information
+                    </h6>
+                </div>
+                <div class="tnh-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Full Name *</label>
+                                <input
+                                    type="text"
+                                    class="form-control-tnh"
+                                    name="full_name"
+                                    value="{{ tenant.full_name }}"
+                                    required
+                                >
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Phone Number *</label>
+                                <input
+                                    type="text"
+                                    class="form-control-tnh"
+                                    name="phone"
+                                    value="{{ tenant.phone }}"
+                                    required
+                                >
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Email Address</label>
+                                <input
+                                    type="email"
+                                    class="form-control-tnh"
+                                    name="email"
+                                    value="{{ tenant.email or '' }}"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Contact -->
+            <div class="tnh-card mb-4">
+                <div class="tnh-card-header">
+                    <h6 class="tnh-card-title">
+                        <i class="bi bi-telephone-fill"
+                           style="color:var(--warning);"></i>
+                        Emergency Contact
+                    </h6>
+                </div>
+                <div class="tnh-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Contact Name</label>
+                                <input
+                                    type="text"
+                                    class="form-control-tnh"
+                                    name="emergency_contact"
+                                    value="{{ tenant.emergency_contact or '' }}"
+                                >
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Contact Phone</label>
+                                <input
+                                    type="text"
+                                    class="form-control-tnh"
+                                    name="emergency_phone"
+                                    value="{{ tenant.emergency_phone or '' }}"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Assignment -->
+            <div class="tnh-card mb-4">
+                <div class="tnh-card-header">
+                    <h6 class="tnh-card-title">
+                        <i class="bi bi-house-fill"
+                           style="color:var(--success);"></i>
+                        Room Assignment
+                    </h6>
+                </div>
+                <div class="tnh-card-body">
+                    <div class="form-group">
+                        <label class="form-label-tnh">Assigned Room *</label>
+                        <select class="form-control-tnh" name="room_id" required>
+                            {% for room in rooms %}
+                            <option value="{{ room.id }}"
+                                {% if room.id == tenant.room_id %}selected{% endif %}>
+                                {{ room.room_name }} — {{ room.room_type }}
+                                {% if room.id == tenant.room_id %}(Current){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div style="display:flex;gap:12px;">
+                <button type="submit" class="btn-primary-tnh"
+                        style="padding:12px 28px;font-size:0.95rem;
+                               background:var(--warning);color:#1a1a2e;">
+                    <i class="bi bi-save"></i> Save Changes
+                </button>
+                <a href="{{ url_for('tenants') }}" class="btn-secondary-tnh"
+                   style="padding:12px 28px;font-size:0.95rem;">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- Current Info Panel -->
+    <div class="col-lg-4">
+        <div class="tnh-card">
+            <div class="tnh-card-header">
+                <h6 class="tnh-card-title">
+                    <i class="bi bi-person-circle"
+                       style="color:var(--accent);"></i>
+                    Current Record
+                </h6>
+            </div>
+            <div class="tnh-card-body">
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    <div>
+                        <div style="font-size:0.72rem;text-transform:uppercase;
+                                    letter-spacing:0.5px;color:var(--text-muted);
+                                    font-weight:600;margin-bottom:3px;">
+                            Name
+                        </div>
+                        <div style="font-weight:700;">{{ tenant.full_name }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.72rem;text-transform:uppercase;
+                                    letter-spacing:0.5px;color:var(--text-muted);
+                                    font-weight:600;margin-bottom:3px;">
+                            Room
+                        </div>
+                        <div style="font-weight:700;">{{ tenant.room.room_name }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.72rem;text-transform:uppercase;
+                                    letter-spacing:0.5px;color:var(--text-muted);
+                                    font-weight:600;margin-bottom:3px;">
+                            Registered
+                        </div>
+                        <div style="font-weight:700;">
+                            {{ tenant.date_registered.strftime('%d %B %Y') }}
+                        </div>
+                    </div>
+                    {% if tenant.payments %}
+                    {% set latest = tenant.payments[-1] %}
+                    <div>
+                        <div style="font-size:0.72rem;text-transform:uppercase;
+                                    letter-spacing:0.5px;color:var(--text-muted);
+                                    font-weight:600;margin-bottom:3px;">
+                            Rent Status
+                        </div>
+                        {% if latest.status == 'ACTIVE' %}
+                            <span class="status-badge status-active">✅ Active</span>
+                        {% elif latest.status == 'EXPIRING SOON' %}
+                            <span class="status-badge status-expiring">
+                                ⚠️ Expiring Soon
+                            </span>
+                        {% else %}
+                            <span class="status-badge status-expired">❌ Expired</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

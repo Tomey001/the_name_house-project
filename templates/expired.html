@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+Rent Alerts — The Name Villa
+{% block page_title %}Rent Alerts{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-header-title">
+        <i class="bi bi-exclamation-triangle"></i> Rent Alerts
+    </h1>
+    <a href="{{ url_for('payments') }}" class="btn-secondary-tnh">
+        <i class="bi bi-arrow-left"></i> All Payments
+    </a>
+</div>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon red">
+                <i class="bi bi-x-circle-fill"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ expired_list|length }}</div>
+                <div class="stat-label">Expired Rent</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="stat-card">
+            <div class="stat-icon orange">
+                <i class="bi bi-clock-warning"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ expiring_list|length }}</div>
+                <div class="stat-label">Expiring Within 30 Days</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── EXPIRED SECTION ────────────────────────────────────── -->
+<div class="tnh-card mb-4">
+    <div class="tnh-card-header"
+         style="border-left:4px solid var(--danger);">
+        <h6 class="tnh-card-title">
+            <i class="bi bi-x-circle-fill" style="color:var(--danger);"></i>
+            Expired Rent
+        </h6>
+        <span style="background:#fde8ea;color:#8b1a23;padding:4px 12px;
+                     border-radius:20px;font-size:0.78rem;font-weight:700;">
+            {{ expired_list|length }} tenant{{ 's' if expired_list|length != 1 else '' }}
+        </span>
+    </div>
+
+    {% if expired_list %}
+    <div style="overflow-x:auto;">
+        <table class="tnh-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tenant</th>
+                    <th>Phone</th>
+                    <th>Room</th>
+                    <th>Expired On</th>
+                    <th>Overdue</th>
+                    <th>Last Paid</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in expired_list %}
+                <tr style="background:#fffafa;">
+                    <td style="color:var(--text-muted);font-size:0.8rem;">
+                        {{ loop.index }}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('tenant_detail', tenant_id=payment.tenant.id) }}"
+                           style="font-weight:700;color:var(--danger);
+                                  text-decoration:none;">
+                            {{ payment.tenant.full_name }}
+                        </a>
+                    </td>
+                    <td style="font-size:0.875rem;">
+                        {{ payment.tenant.phone }}
+                    </td>
+                    <td style="font-size:0.875rem;">
+                        {{ payment.tenant.room.room_name }}
+                    </td>
+                    <td style="font-weight:700;color:var(--danger);
+                               font-size:0.875rem;">
+                        {{ payment.expiry_date.strftime('%d %b %Y') }}
+                    </td>
+                    <td>
+                        <span class="status-badge status-expired">
+                            {{ payment.days_remaining|abs }} days overdue
+                        </span>
+                    </td>
+                    <td style="font-size:0.875rem;">
+                        GHS {{ "%.2f"|format(payment.amount) }}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('add_payment', tenant_id=payment.tenant.id) }}"
+                           class="btn-primary-tnh"
+                           style="padding:6px 14px;font-size:0.78rem;
+                                  background:var(--danger);">
+                            <i class="bi bi-arrow-repeat"></i> Renew Now
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="empty-state" style="padding:40px 20px;">
+        <i class="bi bi-check-circle-fill"
+           style="color:var(--success);opacity:1;"></i>
+        <p style="color:var(--success);font-weight:700;">
+            No expired rent records. All good! ✅
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ── EXPIRING SOON SECTION ──────────────────────────────── -->
+<div class="tnh-card">
+    <div class="tnh-card-header"
+         style="border-left:4px solid var(--warning);">
+        <h6 class="tnh-card-title">
+            <i class="bi bi-clock-warning" style="color:var(--warning);"></i>
+            Expiring Soon
+            <span style="font-size:0.75rem;font-weight:400;
+                         color:var(--text-muted);">
+                — within 30 days
+            </span>
+        </h6>
+        <span style="background:#fff3cd;color:#856404;padding:4px 12px;
+                     border-radius:20px;font-size:0.78rem;font-weight:700;">
+            {{ expiring_list|length }} tenant{{ 's' if expiring_list|length != 1 else '' }}
+        </span>
+    </div>
+
+    {% if expiring_list %}
+    <div style="overflow-x:auto;">
+        <table class="tnh-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tenant</th>
+                    <th>Phone</th>
+                    <th>Room</th>
+                    <th>Expiry Date</th>
+                    <th>Days Left</th>
+                    <th>Last Paid</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in expiring_list %}
+                <tr style="background:#fffdf0;">
+                    <td style="color:var(--text-muted);font-size:0.8rem;">
+                        {{ loop.index }}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('tenant_detail', tenant_id=payment.tenant.id) }}"
+                           style="font-weight:700;color:#856404;
+                                  text-decoration:none;">
+                            {{ payment.tenant.full_name }}
+                        </a>
+                    </td>
+                    <td style="font-size:0.875rem;">
+                        {{ payment.tenant.phone }}
+                    </td>
+                    <td style="font-size:0.875rem;">
+                        {{ payment.tenant.room.room_name }}
+                    </td>
+                    <td style="font-weight:700;color:#856404;
+                               font-size:0.875rem;">
+                        {{ payment.expiry_date.strftime('%d %b %Y') }}
+                    </td>
+                    <td>
+                        <span class="status-badge status-expiring">
+                            ⚠️ {{ payment.days_remaining }} days left
+                        </span>
+                    </td>
+                    <td style="font-size:0.875rem;">
+                        GHS {{ "%.2f"|format(payment.amount) }}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('add_payment', tenant_id=payment.tenant.id) }}"
+                           class="btn-primary-tnh"
+                           style="padding:6px 14px;font-size:0.78rem;
+                                  background:#856404;">
+                            <i class="bi bi-arrow-repeat"></i> Renew
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="empty-state" style="padding:40px 20px;">
+        <i class="bi bi-check-circle-fill"
+           style="color:var(--success);opacity:1;"></i>
+        <p style="color:var(--success);font-weight:700;">
+            No tenants expiring soon. ✅
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+Rooms — The Name Villa
+{% block page_title %}Room Availability{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-header-title">
+        <i class="bi bi-door-open"></i> Room Availability
+    </h1>
+    <div style="display:flex;gap:10px;align-items:center;">
+        <span class="status-badge status-vacant" style="font-size:0.8rem;padding:6px 14px;">
+            🟢 Vacant: {{ all_rooms|selectattr('is_occupied','equalto',false)|list|length }}
+        </span>
+        <span class="status-badge status-occupied" style="font-size:0.8rem;padding:6px 14px;">
+            🔴 Occupied: {{ all_rooms|selectattr('is_occupied','equalto',true)|list|length }}
+        </span>
+    </div>
+</div>
+
+<!-- ── Chamber & Hall ─────────────────────────────────────── -->
+<div class="tnh-card mb-4">
+    <div class="tnh-card-header">
+        <h6 class="tnh-card-title">
+            <i class="bi bi-house-fill" style="color:var(--accent);"></i>
+            Chamber &amp; Hall Rooms
+        </h6>
+        <span style="background:#f0f2f5;padding:4px 12px;border-radius:20px;
+                     font-size:0.78rem;font-weight:600;color:var(--text-muted);">
+            {{ chamber_rooms|length }} rooms
+        </span>
+    </div>
+    <div class="tnh-card-body">
+        <div class="row g-3">
+            {% for room in chamber_rooms %}
+            <div class="col-xl-4 col-md-6">
+                <div class="room-card {{ 'occupied' if room.is_occupied else 'vacant' }}">
+                    <div class="room-icon">
+                        <i class="bi bi-house-fill"></i>
+                    </div>
+                    <div class="room-name">{{ room.room_name }}</div>
+                    <span class="status-badge
+                        {{ 'status-occupied' if room.is_occupied else 'status-vacant' }}">
+                        {{ '🔴 Occupied' if room.is_occupied else '🟢 Vacant' }}
+                    </span>
+                    {% if room.is_occupied and room.tenant %}
+                    <div class="room-tenant">
+                        <i class="bi bi-person-fill"></i>
+                        {{ room.tenant.full_name }}
+                    </div>
+                    {% if room.tenant.payments %}
+                        {% set latest = room.tenant.payments[-1] %}
+                        <div style="margin-top:8px;">
+                            {% if latest.status == 'ACTIVE' %}
+                                <span class="status-badge status-active"
+                                      style="font-size:0.68rem;">
+                                    ✅ Rent Active
+                                </span>
+                            {% elif latest.status == 'EXPIRING SOON' %}
+                                <span class="status-badge status-expiring"
+                                      style="font-size:0.68rem;">
+                                    ⚠️ Expiring Soon
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-expired"
+                                      style="font-size:0.68rem;">
+                                    ❌ Rent Expired
+                                </span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="room-tenant" style="margin-top:10px;">
+                        <a href="{{ url_for('add_tenant') }}"
+                           style="color:var(--accent);font-size:0.78rem;
+                                  text-decoration:none;font-weight:600;">
+                            <i class="bi bi-plus-circle"></i> Assign Tenant
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ── Single Rooms ───────────────────────────────────────── -->
+<div class="tnh-card mb-4">
+    <div class="tnh-card-header">
+        <h6 class="tnh-card-title">
+            <i class="bi bi-door-open-fill" style="color:var(--success);"></i>
+            Single Rooms
+        </h6>
+        <span style="background:#f0f2f5;padding:4px 12px;border-radius:20px;
+                     font-size:0.78rem;font-weight:600;color:var(--text-muted);">
+            {{ single_rooms|length }} rooms
+        </span>
+    </div>
+    <div class="tnh-card-body">
+        <div class="row g-3">
+            {% for room in single_rooms %}
+            <div class="col-xl-3 col-md-6">
+                <div class="room-card {{ 'occupied' if room.is_occupied else 'vacant' }}">
+                    <div class="room-icon">
+                        <i class="bi bi-door-open-fill"></i>
+                    </div>
+                    <div class="room-name">{{ room.room_name }}</div>
+                    <span class="status-badge
+                        {{ 'status-occupied' if room.is_occupied else 'status-vacant' }}">
+                        {{ '🔴 Occupied' if room.is_occupied else '🟢 Vacant' }}
+                    </span>
+                    {% if room.is_occupied and room.tenant %}
+                    <div class="room-tenant">
+                        <i class="bi bi-person-fill"></i>
+                        {{ room.tenant.full_name }}
+                    </div>
+                    {% if room.tenant.payments %}
+                        {% set latest = room.tenant.payments[-1] %}
+                        <div style="margin-top:8px;">
+                            {% if latest.status == 'ACTIVE' %}
+                                <span class="status-badge status-active"
+                                      style="font-size:0.68rem;">✅ Active</span>
+                            {% elif latest.status == 'EXPIRING SOON' %}
+                                <span class="status-badge status-expiring"
+                                      style="font-size:0.68rem;">⚠️ Expiring</span>
+                            {% else %}
+                                <span class="status-badge status-expired"
+                                      style="font-size:0.68rem;">❌ Expired</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="room-tenant" style="margin-top:10px;">
+                        <a href="{{ url_for('add_tenant') }}"
+                           style="color:var(--accent);font-size:0.78rem;
+                                  text-decoration:none;font-weight:600;">
+                            <i class="bi bi-plus-circle"></i> Assign Tenant
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ── Stores ─────────────────────────────────────────────── -->
+<div class="tnh-card mb-4">
+    <div class="tnh-card-header">
+        <h6 class="tnh-card-title">
+            <i class="bi bi-box-fill" style="color:var(--text-muted);"></i>
+            Stores
+        </h6>
+        <span style="background:#f0f2f5;padding:4px 12px;border-radius:20px;
+                     font-size:0.78rem;font-weight:600;color:var(--text-muted);">
+            {{ stores|length }} stores
+        </span>
+    </div>
+    <div class="tnh-card-body">
+        <div class="row g-3">
+            {% for room in stores %}
+            <div class="col-xl-4 col-md-6">
+                <div class="room-card {{ 'occupied' if room.is_occupied else 'vacant' }}">
+                    <div class="room-icon">
+                        <i class="bi bi-box-fill"></i>
+                    </div>
+                    <div class="room-name">{{ room.room_name }}</div>
+                    <span class="status-badge
+                        {{ 'status-occupied' if room.is_occupied else 'status-vacant' }}">
+                        {{ '🔴 Occupied' if room.is_occupied else '🟢 Vacant' }}
+                    </span>
+                    {% if room.is_occupied and room.tenant %}
+                    <div class="room-tenant">
+                        <i class="bi bi-person-fill"></i>
+                        {{ room.tenant.full_name }}
+                    </div>
+                    {% else %}
+                    <div class="room-tenant" style="margin-top:10px;">
+                        <a href="{{ url_for('add_tenant') }}"
+                           style="color:var(--accent);font-size:0.78rem;
+                                  text-decoration:none;font-weight:600;">
+                            <i class="bi bi-plus-circle"></i> Assign Tenant
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

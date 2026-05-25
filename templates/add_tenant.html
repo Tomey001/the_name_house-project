@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+Add Tenant — The Name Villa
+{% block page_title %}Add New Tenant{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-header-title">
+        <i class="bi bi-person-plus"></i> Register New Tenant
+    </h1>
+    <a href="{{ url_for('tenants') }}" class="btn-secondary-tnh">
+        <i class="bi bi-arrow-left"></i> Back to Tenants
+    </a>
+</div>
+
+<div class="row g-4">
+
+    <!-- ── Main Form ────────────────────────────────────── -->
+    <div class="col-lg-8">
+        <form method="POST" action="{{ url_for('add_tenant') }}">
+
+            <!-- Personal Information -->
+            <div class="tnh-card mb-4">
+                <div class="tnh-card-header">
+                    <h6 class="tnh-card-title">
+                        <i class="bi bi-person-fill" style="color:var(--accent);"></i>
+                        Personal Information
+                    </h6>
+                </div>
+                <div class="tnh-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">
+                                    Full Name <span style="color:var(--danger);">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    class="form-control-tnh"
+                                    name="full_name"
+                                    placeholder="e.g. John Kwame Mensah"
+                                    required
+                                >
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">
+                                    Phone Number <span style="color:var(--danger);">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    class="form-control-tnh"
+                                    name="phone"
+                                    placeholder="e.g. 0244123456"
+                                    required
+                                >
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label-tnh">
+                                    Email Address
+                                    <span style="color:var(--text-muted);
+                                                 font-weight:400;
+                                                 text-transform:none;">
+                                        (optional)
+                                    </span>
+                                </label>
+                                <input
+                                    type="email"
+                                    class="form-control-tnh"
+                                    name="email"
+                                    placeholder="e.g. john@email.com"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Contact -->
+            <div class="tnh-card mb-4">
+                <div class="tnh-card-header">
+                    <h6 class="tnh-card-title">
+                        <i class="bi bi-telephone-fill"
+                           style="color:var(--warning);"></i>
+                        Emergency Contact
+                        <span style="font-size:0.75rem;font-weight:400;
+                                     color:var(--text-muted);">
+                            — optional
+                        </span>
+                    </h6>
+                </div>
+                <div class="tnh-card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Contact Name</label>
+                                <input
+                                    type="text"
+                                    class="form-control-tnh"
+                                    name="emergency_contact"
+                                    placeholder="e.g. Mary Mensah"
+                                >
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Contact Phone</label>
+                                <input
+                                    type="text"
+                                    class="form-control-tnh"
+                                    name="emergency_phone"
+                                    placeholder="e.g. 0201234567"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Room Assignment -->
+            <div class="tnh-card mb-4">
+                <div class="tnh-card-header">
+                    <h6 class="tnh-card-title">
+                        <i class="bi bi-house-fill"
+                           style="color:var(--success);"></i>
+                        Room Assignment
+                    </h6>
+                </div>
+                <div class="tnh-card-body">
+                    {% if rooms %}
+                    <div class="form-group">
+                        <label class="form-label-tnh">
+                            Select Room <span style="color:var(--danger);">*</span>
+                        </label>
+                        <select class="form-control-tnh" name="room_id" required>
+                            <option value="">— Choose a vacant room —</option>
+                            {% for room in rooms %}
+                            <option value="{{ room.id }}">
+                                {{ room.room_name }} — {{ room.room_type }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% else %}
+                    <div class="tnh-alert tnh-alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <div>
+                            <strong>No vacant rooms available.</strong>
+                            All 10 rooms are currently occupied.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Initial Payment -->
+            <div class="tnh-card mb-4">
+                <div class="tnh-card-header">
+                    <h6 class="tnh-card-title">
+                        <i class="bi bi-cash-stack"
+                           style="color:var(--success);"></i>
+                        Initial Rent Payment
+                        <span style="font-size:0.75rem;font-weight:400;
+                                     color:var(--text-muted);">
+                            — optional
+                        </span>
+                    </h6>
+                </div>
+                <div class="tnh-card-body">
+                    <div class="tnh-alert tnh-alert-info" style="margin-bottom:20px;">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <div>
+                            Rent expiry is <strong>automatically calculated</strong>
+                            as exactly 1 year from the payment date.
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Amount (GHS)</label>
+                                <input
+                                    type="number"
+                                    class="form-control-tnh"
+                                    name="payment_amount"
+                                    placeholder="e.g. 1200.00"
+                                    min="0"
+                                    step="0.01"
+                                >
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label-tnh">Payment Date</label>
+                                <input
+                                    type="date"
+                                    class="form-control-tnh"
+                                    name="payment_date"
+                                >
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div style="display:flex;gap:12px;">
+                <button type="submit" class="btn-primary-tnh"
+                        style="padding:12px 28px;font-size:0.95rem;">
+                    <i class="bi bi-check-circle"></i>
+                    Register Tenant
+                </button>
+                <a href="{{ url_for('tenants') }}" class="btn-secondary-tnh"
+                   style="padding:12px 28px;font-size:0.95rem;">
+                    Cancel
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ── Info Sidebar ──────────────────────────────────── -->
+    <div class="col-lg-4">
+
+        <!-- How It Works -->
+        <div class="tnh-card mb-3">
+            <div class="tnh-card-header">
+                <h6 class="tnh-card-title">
+                    <i class="bi bi-info-circle"
+                       style="color:var(--info);"></i>
+                    How It Works
+                </h6>
+            </div>
+            <div class="tnh-card-body">
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                    {% for step, text in [
+                        ('1', 'Enter the tenant\'s personal details'),
+                        ('2', 'Select an available vacant room'),
+                        ('3', 'Add the initial rent payment (optional)'),
+                        ('4', 'Expiry date is auto-calculated (1 year)'),
+                        ('5', 'Room is marked as occupied automatically')
+                    ] %}
+                    <div style="display:flex;align-items:flex-start;gap:10px;">
+                        <div style="width:24px;height:24px;background:var(--accent);
+                                    color:white;border-radius:50%;display:flex;
+                                    align-items:center;justify-content:center;
+                                    font-size:0.7rem;font-weight:700;flex-shrink:0;">
+                            {{ step }}
+                        </div>
+                        <span style="font-size:0.82rem;color:var(--text-muted);
+                                     padding-top:3px;">
+                            {{ text }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Rooms -->
+        <div class="tnh-card">
+            <div class="tnh-card-header">
+                <h6 class="tnh-card-title">
+                    <i class="bi bi-door-open"
+                       style="color:var(--success);"></i>
+                    Vacant Rooms
+                </h6>
+                <span style="background:#d4f5e2;color:#1a7a3c;padding:4px 10px;
+                             border-radius:20px;font-size:0.75rem;font-weight:700;">
+                    {{ rooms|length }}
+                </span>
+            </div>
+            <div style="padding:0;">
+                {% for room in rooms %}
+                <div style="padding:10px 18px;border-bottom:1px solid var(--border-color);
+                            display:flex;align-items:center;gap:10px;font-size:0.82rem;">
+                    <i class="bi bi-check-circle-fill"
+                       style="color:var(--success);font-size:0.9rem;"></i>
+                    <div>
+                        <div style="font-weight:600;">{{ room.room_name }}</div>
+                        <div style="color:var(--text-muted);font-size:0.75rem;">
+                            {{ room.room_type }}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div style="padding:20px;text-align:center;
+                            color:var(--text-muted);font-size:0.82rem;">
+                    No vacant rooms
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

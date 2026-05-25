@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+Tenants — The Name Villa
+{% block page_title %}Tenants{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-header-title">
+        <i class="bi bi-people"></i> All Tenants
+    </h1>
+    <a href="{{ url_for('add_tenant') }}" class="btn-primary-tnh">
+        <i class="bi bi-person-plus"></i> Add New Tenant
+    </a>
+</div>
+
+<!-- Search -->
+<div class="tnh-card mb-4">
+    <div class="tnh-card-body" style="padding:14px 22px;">
+        <form method="GET" action="{{ url_for('tenants') }}">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input
+                    type="text"
+                    name="search"
+                    placeholder="Search by name or phone number..."
+                    value="{{ search }}"
+                >
+                {% if search %}
+                <a href="{{ url_for('tenants') }}"
+                   style="color:var(--text-muted);text-decoration:none;
+                          font-size:0.8rem;white-space:nowrap;">
+                    ✕ Clear
+                </a>
+                {% endif %}
+                <button type="submit" class="btn-primary-tnh"
+                        style="padding:6px 16px;white-space:nowrap;">
+                    Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tenants Table -->
+<div class="tnh-card">
+    <div class="tnh-card-header">
+        <h6 class="tnh-card-title">
+            <i class="bi bi-list-ul"></i>
+            Tenant Records
+        </h6>
+        <span style="background:#f0f2f5;padding:4px 12px;border-radius:20px;
+                     font-size:0.78rem;font-weight:600;color:var(--text-muted);">
+            {{ tenants|length }} tenant{{ 's' if tenants|length != 1 else '' }}
+        </span>
+    </div>
+
+    {% if tenants %}
+    <div style="overflow-x:auto;">
+        <table class="tnh-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tenant</th>
+                    <th>Phone</th>
+                    <th>Room</th>
+                    <th>Type</th>
+                    <th>Rent Status</th>
+                    <th>Registered</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tenant in tenants %}
+                <tr>
+                    <td style="color:var(--text-muted);font-size:0.8rem;">
+                        {{ loop.index }}
+                    </td>
+
+                    <td>
+                        <a href="{{ url_for('tenant_detail', tenant_id=tenant.id) }}"
+                           style="font-weight:600;color:var(--text-dark);
+                                  text-decoration:none;">
+                            {{ tenant.full_name }}
+                        </a>
+                        {% if tenant.email %}
+                        <div style="font-size:0.75rem;color:var(--text-muted);">
+                            {{ tenant.email }}
+                        </div>
+                        {% endif %}
+                    </td>
+
+                    <td style="font-size:0.875rem;">{{ tenant.phone }}</td>
+
+                    <td style="font-weight:600;font-size:0.875rem;">
+                        {{ tenant.room.room_name }}
+                    </td>
+
+                    <td>
+                        <span style="background:#f0f2f5;padding:3px 10px;
+                                     border-radius:20px;font-size:0.75rem;
+                                     font-weight:500;color:var(--text-muted);">
+                            {{ tenant.room.room_type }}
+                        </span>
+                    </td>
+
+                    <td>
+                        {% if tenant.payments %}
+                            {% set latest = tenant.payments[-1] %}
+                            {% if latest.status == 'ACTIVE' %}
+                                <span class="status-badge status-active">
+                                    ✅ Active
+                                </span>
+                            {% elif latest.status == 'EXPIRING SOON' %}
+                                <span class="status-badge status-expiring">
+                                    ⚠️ Expiring
+                                </span>
+                            {% else %}
+                                <span class="status-badge status-expired">
+                                    ❌ Expired
+                                </span>
+                            {% endif %}
+                        {% else %}
+                            <span class="status-badge status-nopayment">
+                                — No Payment
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td style="font-size:0.8rem;color:var(--text-muted);">
+                        {{ tenant.date_registered.strftime('%d %b %Y') }}
+                    </td>
+
+                    <td>
+                        <div style="display:flex;gap:5px;">
+                            <a href="{{ url_for('tenant_detail', tenant_id=tenant.id) }}"
+                               class="btn-icon btn-icon-view" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('edit_tenant', tenant_id=tenant.id) }}"
+                               class="btn-icon btn-icon-edit" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{{ url_for('add_payment', tenant_id=tenant.id) }}"
+                               class="btn-icon btn-icon-pay" title="Add Payment">
+                                <i class="bi bi-cash"></i>
+                            </a>
+                            <button class="btn-icon btn-icon-delete"
+                                    title="Delete"
+                                    onclick="confirmDelete({{ tenant.id }}, '{{ tenant.full_name }}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <form id="delete-form-{{ tenant.id }}"
+                                  action="{{ url_for('delete_tenant', tenant_id=tenant.id) }}"
+                                  method="POST" style="display:none;"></form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+        <i class="bi bi-people"></i>
+        <p>
+            {% if search %}
+                No tenants found for "{{ search }}"
+            {% else %}
+                No tenants registered yet.
+            {% endif %}
+        </p>
+        <a href="{{ url_for('add_tenant') }}" class="btn-primary-tnh">
+            <i class="bi bi-person-plus"></i> Add First Tenant
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+function confirmDelete(id, name) {
+    if (confirm(`Delete "${name}"?\n\nThis will also remove all their payment records.`)) {
+        document.getElementById('delete-form-' + id).submit();
+    }
+}
+</script>
+
+{% endblock %}
