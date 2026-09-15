@@ -1,14 +1,14 @@
 # init_db.py
-# This runs automatically to set up the database on Render
+# Runs automatically on Render startup to prepare database
 
 from app import app, db
 
 with app.app_context():
-    # Import all models
     from models import Room, Tenant, Payment, Admin
 
     # Create all tables
     db.create_all()
+    print("✅ Tables created!")
 
     # ── Seed rooms if empty ──────────────────────────────
     if Room.query.count() == 0:
@@ -26,14 +26,21 @@ with app.app_context():
         ]
         db.session.add_all(rooms)
         db.session.commit()
-        print("✅ Rooms seeded successfully!")
+        print("✅ All 10 rooms created!")
+    else:
+        print(f"ℹ️  Rooms already exist — skipping.")
 
     # ── Create admin if not exists ───────────────────────
-    if Admin.query.count() == 0:
+    existing_admin = Admin.query.filter_by(username='admin').first()
+    if not existing_admin:
         admin = Admin(username='admin')
         admin.set_password('admin123')
         db.session.add(admin)
         db.session.commit()
         print("✅ Admin account created!")
+        print("   Username: admin")
+        print("   Password: admin123")
+    else:
+        print("ℹ️  Admin already exists — skipping.")
 
-    print("✅ Database ready!")
+    print("✅ Database fully ready!")
