@@ -1,9 +1,8 @@
 # models.py
 from datetime import datetime, date
 
-# Import shared db to avoid circular imports
-from extensions import db
-
+# Import db from app - we use the SAME db object always
+from app import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
