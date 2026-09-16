@@ -1,7 +1,7 @@
 # routes.py
 from flask import render_template, redirect, url_for, request, flash
 from flask_login import (
-    login_user, logout_user,
+    login_user, logout_url, logout_user,
     login_required, current_user
 )
 from app import app, db
@@ -16,16 +16,20 @@ def inject_globals():
     def get_all_rooms():
         try:
             from models import Room
-            return Room.query.all()
+            return db.session.execute(
+                db.select(Room)
+            ).scalars().all()
         except Exception:
             return []
 
     def get_expired_count():
         try:
             from models import Payment
-            all_payments = Payment.query.all()
+            payments = db.session.execute(
+                db.select(Payment)
+            ).scalars().all()
             return sum(
-                1 for p in all_payments
+                1 for p in payments
                 if p.status == 'EXPIRED'
             )
         except Exception:
@@ -56,9 +60,9 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        admin    = Admin.query.filter_by(
-            username=username
-        ).first()
+        admin = db.session.execute(
+            db.select(Admin).filter_by(username=username)
+        ).scalar_one_or_none()
         if admin and admin.check_password(password):
             login_user(admin)
             flash('✅ Welcome back!', 'success')
@@ -86,16 +90,30 @@ def logout():
 @login_required
 def dashboard():
     from models import Room, Tenant, Payment
-    total_rooms    = Room.query.count()
-    occupied_rooms = Room.query.filter_by(
-        is_occupied=True
-    ).count()
-    vacant_rooms   = total_rooms - occupied_rooms
-    total_tenants  = Tenant.query.filter_by(
-        is_active=True
-    ).count()
-    all_payments   = Payment.query.all()
-    expiring_soon  = sum(
+
+    total_rooms = db.session.execute(
+        db.select(db.func.count(Room.id))
+    ).scalar()
+
+    occupied_rooms = db.session.execute(
+        db.select(db.func.count(Room.id)).where(
+            Room.is_occupied == True
+        )
+    ).scalar()
+
+    vacant_rooms  = total_rooms - occupied_rooms
+
+    total_tenants = db.session.execute(
+        db.select(db.func.count(Tenant.id)).where(
+            Tenant.is_active == True
+        )
+    ).scalar()
+
+    all_payments = db.session.execute(
+        db.select(Payment)
+    ).scalars().all()
+
+    expiring_soon = sum(
         1 for p in all_payments
         if p.status == 'EXPIRING SOON'
     )
@@ -103,6 +121,7 @@ def dashboard():
         1 for p in all_payments
         if p.status == 'EXPIRED'
     )
+
     return render_template('dashboard.html',
         total_rooms=total_rooms,
         occupied_rooms=occupied_rooms,
@@ -122,17 +141,20 @@ def tenants():
     from models import Tenant
     search = request.args.get('search', '')
     if search:
-        all_tenants = Tenant.query.filter(
-            Tenant.is_active == True,
-            db.or_(
-                Tenant.full_name.ilike(f'%{search}%'),
-                Tenant.phone.ilike(f'%{search}%')
+        all_tenants = db.session.execute(
+            db.select(Tenant).where(
+                Tenant.is_active == True,
+                db.or_(
+                    Tenant.full_name.ilike(f'%{search}%'),
+                    Tenant.phone.ilike(f'%{search}%')
+                )
             )
-        ).all()
+        ).scalars().all()
     else:
-        all_tenants = Tenant.query.filter_by(
-            is_active=True
-        ).all()
+        all_tenants = db.session.execute(
+            db.select(Tenant).where(Tenant.is_active == True)
+        ).scalars().all()
+
     return render_template('tenants.html',
         tenants=all_tenants,
         search=search
@@ -146,9 +168,10 @@ def tenants():
 @login_required
 def add_tenant():
     from models import Room, Tenant, Payment
-    vacant_rooms = Room.query.filter_by(
-        is_occupied=False
-    ).all()
+
+    vacant_rooms = db.session.execute(
+        db.select(Room).where(Room.is_occupied == False)
+    ).scalars().all()
 
     if request.method == 'POST':
         full_name         = request.form.get('full_name')
@@ -169,9 +192,9 @@ def add_tenant():
                 'add_tenant.html', rooms=vacant_rooms
             )
 
-        room = Room.query.get(int(room_id))
+        room = db.session.get(Room, int(room_id))
         if not room:
-            flash('❌ Selected room does not exist.', 'danger')
+            flash('❌ Room does not exist.', 'danger')
             return render_template(
                 'add_tenant.html', rooms=vacant_rooms
             )
@@ -212,10 +235,7 @@ def add_tenant():
             db.session.add(new_payment)
 
         db.session.commit()
-        flash(
-            f'✅ Tenant "{full_name}" registered!',
-            'success'
-        )
+        flash(f'✅ Tenant "{full_name}" registered!', 'success')
         return redirect(url_for('tenants'))
 
     return render_template('add_tenant.html', rooms=vacant_rooms)
@@ -228,7 +248,10 @@ def add_tenant():
 @login_required
 def tenant_detail(tenant_id):
     from models import Tenant
-    tenant = Tenant.query.get_or_404(tenant_id)
+    tenant = db.session.get(Tenant, tenant_id)
+    if not tenant:
+        flash('❌ Tenant not found.', 'danger')
+        return redirect(url_for('tenants'))
     return render_template('tenant_detail.html', tenant=tenant)
 
 
@@ -240,8 +263,15 @@ def tenant_detail(tenant_id):
 @login_required
 def edit_tenant(tenant_id):
     from models import Tenant, Room
-    tenant    = Tenant.query.get_or_404(tenant_id)
-    all_rooms = Room.query.all()
+    tenant = db.session.get(Tenant, tenant_id)
+    if not tenant:
+        flash('❌ Tenant not found.', 'danger')
+        return redirect(url_for('tenants'))
+
+    all_rooms = db.session.execute(
+        db.select(Room)
+    ).scalars().all()
+
     available_rooms = [
         r for r in all_rooms
         if not r.is_occupied or r.id == tenant.room_id
@@ -260,10 +290,10 @@ def edit_tenant(tenant_id):
         new_room_id = int(request.form.get('room_id'))
 
         if new_room_id != tenant.room_id:
-            old_room = Room.query.get(tenant.room_id)
+            old_room = db.session.get(Room, tenant.room_id)
             if old_room:
                 old_room.is_occupied = False
-            new_room = Room.query.get(new_room_id)
+            new_room = db.session.get(Room, new_room_id)
             if new_room:
                 new_room.is_occupied = True
             tenant.room_id = new_room_id
@@ -288,17 +318,22 @@ def edit_tenant(tenant_id):
 @login_required
 def delete_tenant(tenant_id):
     from models import Tenant, Room, Payment
-    tenant = Tenant.query.get_or_404(tenant_id)
-    room   = Room.query.get(tenant.room_id)
-    if room:
-        room.is_occupied = False
-    Payment.query.filter_by(tenant_id=tenant_id).delete()
-    db.session.delete(tenant)
-    db.session.commit()
-    flash(
-        f'✅ Tenant "{tenant.full_name}" deleted.',
-        'success'
-    )
+    tenant = db.session.get(Tenant, tenant_id)
+    if tenant:
+        room = db.session.get(Room, tenant.room_id)
+        if room:
+            room.is_occupied = False
+        db.session.execute(
+            db.delete(Payment).where(
+                Payment.tenant_id == tenant_id
+            )
+        )
+        db.session.delete(tenant)
+        db.session.commit()
+        flash(
+            f'✅ Tenant "{tenant.full_name}" deleted.',
+            'success'
+        )
     return redirect(url_for('tenants'))
 
 
@@ -309,16 +344,18 @@ def delete_tenant(tenant_id):
 @login_required
 def rooms():
     from models import Room
-    all_rooms     = Room.query.all()
+    all_rooms = db.session.execute(
+        db.select(Room)
+    ).scalars().all()
     chamber_rooms = [
         r for r in all_rooms
         if r.room_type == 'Chamber and Hall'
     ]
-    single_rooms  = [
+    single_rooms = [
         r for r in all_rooms
         if r.room_type == 'Single Room'
     ]
-    stores        = [
+    stores = [
         r for r in all_rooms
         if r.room_type == 'Store'
     ]
@@ -337,9 +374,11 @@ def rooms():
 @login_required
 def payments():
     from models import Payment
-    all_payments = Payment.query.order_by(
-        Payment.payment_date.desc()
-    ).all()
+    all_payments = db.session.execute(
+        db.select(Payment).order_by(
+            Payment.payment_date.desc()
+        )
+    ).scalars().all()
     return render_template('payments.html',
                            payments=all_payments)
 
@@ -352,7 +391,10 @@ def payments():
 @login_required
 def add_payment(tenant_id):
     from models import Tenant, Payment
-    tenant = Tenant.query.get_or_404(tenant_id)
+    tenant = db.session.get(Tenant, tenant_id)
+    if not tenant:
+        flash('❌ Tenant not found.', 'danger')
+        return redirect(url_for('tenants'))
 
     if request.method == 'POST':
         amount           = request.form.get('amount')
@@ -396,7 +438,9 @@ def add_payment(tenant_id):
 @login_required
 def expired():
     from models import Payment
-    all_payments  = Payment.query.all()
+    all_payments = db.session.execute(
+        db.select(Payment)
+    ).scalars().all()
     expired_list  = [
         p for p in all_payments if p.status == 'EXPIRED'
     ]
@@ -410,7 +454,7 @@ def expired():
 
 
 # ============================================================
-# SETUP ADMIN — Run once then remove
+# SETUP ADMIN
 # ============================================================
 @app.route('/setup-admin')
 def setup_admin():
@@ -419,19 +463,26 @@ def setup_admin():
     db.create_all()
     results.append("✅ Tables ready")
 
-    existing = Admin.query.filter_by(username='admin').first()
+    existing = db.session.execute(
+        db.select(Admin).filter_by(username='admin')
+    ).scalar_one_or_none()
+
     if not existing:
         admin = Admin(username='admin')
         admin.set_password('admin123')
         db.session.add(admin)
         db.session.commit()
         results.append(
-            "✅ Admin created — username: admin / password: admin123"
+            "✅ Admin created — admin / admin123"
         )
     else:
         results.append("ℹ️ Admin already exists")
 
-    if Room.query.count() == 0:
+    room_count = db.session.execute(
+        db.select(db.func.count(Room.id))
+    ).scalar()
+
+    if room_count == 0:
         rooms = [
             Room(room_name='Chamber & Hall 1',
                  room_type='Chamber and Hall'),
@@ -489,9 +540,7 @@ def setup_admin():
         <div class="card">
             <h2>🏠 The Name House Setup</h2>
             {items}
-            <a href="/login" class="btn">
-                Go to Login →
-            </a>
+            <a href="/login" class="btn">Go to Login →</a>
         </div>
     </body>
     </html>
@@ -505,7 +554,7 @@ def setup_admin():
 
 
 # ============================================================
-# EXPORT — Get local data as JSON
+# EXPORT DATA
 # ============================================================
 @app.route('/export-data')
 @login_required
@@ -513,8 +562,10 @@ def export_data():
     from models import Tenant
     import json
 
-    tenants = Tenant.query.all()
-    data    = []
+    tenants = db.session.execute(
+        db.select(Tenant)
+    ).scalars().all()
+    data = []
 
     for tenant in tenants:
         tenant_data = {
@@ -528,11 +579,11 @@ def export_data():
         }
         for payment in tenant.payments:
             tenant_data['payments'].append({
-                'amount':       payment.amount,
+                'amount': payment.amount,
                 'payment_date': payment.payment_date.strftime(
                     '%Y-%m-%d'
                 ),
-                'expiry_date':  payment.expiry_date.strftime(
+                'expiry_date': payment.expiry_date.strftime(
                     '%Y-%m-%d'
                 ),
                 'notes': payment.notes or ''
@@ -543,7 +594,7 @@ def export_data():
 
 
 # ============================================================
-# IMPORT — Load exported data into database
+# IMPORT DATA
 # ============================================================
 @app.route('/import-data', methods=['GET', 'POST'])
 @login_required
@@ -559,17 +610,23 @@ def import_data():
             skipped  = 0
 
             for item in data:
-                existing = Tenant.query.filter_by(
-                    full_name=item['full_name'],
-                    phone=item['phone']
-                ).first()
+                existing = db.session.execute(
+                    db.select(Tenant).where(
+                        Tenant.full_name == item['full_name'],
+                        Tenant.phone == item['phone']
+                    )
+                ).scalar_one_or_none()
+
                 if existing:
                     skipped += 1
                     continue
 
-                room = Room.query.filter_by(
-                    room_name=item['room_name']
-                ).first()
+                room = db.session.execute(
+                    db.select(Room).where(
+                        Room.room_name == item['room_name']
+                    )
+                ).scalar_one_or_none()
+
                 if not room or room.is_occupied:
                     skipped += 1
                     continue
@@ -641,9 +698,9 @@ def import_data():
             }
             button {
                 padding:12px 24px;background:#4361ee;
-                color:white;border:none;
-                border-radius:8px;font-size:1rem;
-                font-weight:bold;cursor:pointer;width:100%;
+                color:white;border:none;border-radius:8px;
+                font-size:1rem;font-weight:bold;
+                cursor:pointer;width:100%;
             }
             .info {
                 background:#e8f4fd;padding:12px;
