@@ -373,3 +373,112 @@ def expired():
         expired_list=expired_list,
         expiring_list=expiring_list
     )
+    
+    # ============================================================
+# SETUP ROUTE — Creates admin on first deployment
+# Visit /setup-admin ONCE then remove this route
+# ============================================================
+@app.route('/setup-admin')
+def setup_admin():
+    from models import Admin, Room
+
+    results = []
+
+    # Create tables
+    db.create_all()
+    results.append("✅ Tables ready")
+
+    # Create admin if not exists
+    existing = Admin.query.filter_by(username='admin').first()
+    if not existing:
+        admin = Admin(username='admin')
+        admin.set_password('admin123')
+        db.session.add(admin)
+        db.session.commit()
+        results.append("✅ Admin created — username: admin / password: admin123")
+    else:
+        results.append("ℹ️ Admin already exists")
+
+    # Seed rooms if empty
+    if Room.query.count() == 0:
+        rooms = [
+            Room(room_name='Chamber & Hall 1', room_type='Chamber and Hall'),
+            Room(room_name='Chamber & Hall 2', room_type='Chamber and Hall'),
+            Room(room_name='Chamber & Hall 3', room_type='Chamber and Hall'),
+            Room(room_name='Single Room 1',    room_type='Single Room'),
+            Room(room_name='Single Room 2',    room_type='Single Room'),
+            Room(room_name='Single Room 3',    room_type='Single Room'),
+            Room(room_name='Single Room 4',    room_type='Single Room'),
+            Room(room_name='Store 1',          room_type='Store'),
+            Room(room_name='Store 2',          room_type='Store'),
+            Room(room_name='Store 3',          room_type='Store'),
+        ]
+        db.session.add_all(rooms)
+        db.session.commit()
+        results.append("✅ All 10 rooms created")
+    else:
+        results.append(f"ℹ️ Rooms already exist")
+
+    # Show results as a simple page
+    html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Setup — The Name House</title>
+        <style>
+            body {{
+                font-family: Arial, sans-serif;
+                max-width: 600px;
+                margin: 60px auto;
+                padding: 20px;
+                background: #f0f2f5;
+            }}
+            .card {{
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            }}
+            h2 {{ color: #1a1a2e; }}
+            .item {{
+                padding: 10px 0;
+                border-bottom: 1px solid #eee;
+                font-size: 0.95rem;
+            }}
+            .btn {{
+                display: inline-block;
+                margin-top: 20px;
+                padding: 12px 24px;
+                background: #4361ee;
+                color: white;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: bold;
+            }}
+            .warning {{
+                margin-top: 20px;
+                padding: 12px;
+                background: #fff3cd;
+                border-radius: 8px;
+                font-size: 0.85rem;
+                color: #856404;
+            }}
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <h2>🏠 The Name House — Setup</h2>
+            {items}
+            <a href="/login" class="btn">Go to Login →</a>
+            <div class="warning">
+                ⚠️ <strong>Important:</strong> Remove the /setup-admin
+                route from routes.py after logging in successfully.
+            </div>
+        </div>
+    </body>
+    </html>
+    """.format(
+        items=''.join(f'<div class="item">{r}</div>' for r in results)
+    )
+
+    return html
